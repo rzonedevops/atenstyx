@@ -1486,8 +1486,8 @@ STYX_NODE <- NODE
 // Link representing distributed AtomSpace connection
 STYX_SPACE_LINK <- ORDERED_LINK
 
-// Link for remote atom access via Styx protocol
-STYX_REMOTE_LINK <- ORDERED_LINK
+// Link for remote atom access via Styx protocol (executable)
+STYX_REMOTE_LINK <- FUNCTION_LINK
 
 // ==============================================================
 // Assorted miscellaneous link types with an unclear future.
