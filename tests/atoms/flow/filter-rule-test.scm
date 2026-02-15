@@ -1,0 +1,156 @@
+#! /usr/bin/env guile
+-s
+!#
+;
+; filter-rule-test.scm -- Test of filters with rules.
+;
+(use-modules (opencog))
+(use-modules (opencog test-runner))
+
+(opencog-test-runner)
+(define tname "filter-rule-test")
+(test-begin tname)
+
+(cog-set-value! (Concept "a") (Predicate "k")
+	(LinkValue (Concept "baz") (Concept "ni") (Concept "goh")))
+
+; -----------
+(define fthree
+	(Filter
+		(LinkSignature (Type 'LinkValue)
+			(Variable "$from") (Variable "$to") (Variable "$msg"))
+		(LinkSignature (Type 'LinkValue)
+			(ValueOf (Concept "a") (Predicate "k")))))
+
+(define e-fthree (cog-execute! fthree))
+(test-assert "filter three"
+	(equal? e-fthree (LinkValue
+		(LinkValue (Concept "baz") (Concept "ni") (Concept "goh")))))
+
+; -----------
+(define frule
+	(Filter
+		(Rule
+			(LinkSignature (Type 'LinkValue)
+				(Variable "$from") (Variable "$to") (Variable "$msg"))
+			(LinkSignature (Type 'LinkValue)
+				(Item "PRIVMSG")
+				(Variable "$from")
+				(Item "you said: ")
+				(Variable "$msg")))
+		(LinkSignature (Type 'LinkValue)
+			(ValueOf (Concept "a") (Predicate "k")))))
+
+(define e-frule (cog-execute! frule))
+(test-assert "filter rule"
+	(equal? e-frule (LinkValue
+		(LinkValue
+			(Item "PRIVMSG")
+			(Concept "baz")
+			(Item "you said: ")
+			(Concept "goh")))))
+
+(cog-set-value! (Concept "a") (Predicate "k")
+	(LinkValue (StringValue "first") (StringValue "sec") (StringValue "third")))
+
+(define e-srule (cog-execute! frule))
+(test-assert "filter string rule"
+	(equal? e-srule (LinkValue
+		(LinkValue
+			(Item "PRIVMSG")
+			(StringValue "first")
+			(Item "you said: ")
+			(StringValue "third")))))
+
+; -----------
+; Test: Pipe/Name as Filter input
+(Pipe
+   (Name "input")
+   (LinkSignature (Type 'LinkValue)
+      (LinkSignature (Type 'LinkValue)
+         (Item "a") (Item "b") (Item "c"))))
+
+(define pipe-rule
+   (Filter
+      (Rule
+         (VariableList
+            (Variable "$from") (Variable "$to") (Variable "$msg"))
+         (LinkSignature (Type 'LinkValue)
+            (Variable "$from") (Variable "$to") (Variable "$msg"))
+         (LinkSignature (Type 'LinkValue)
+            (Item "PRIVMSG")
+            (Variable "$from")
+            (Item "you said: ")
+            (Variable "$msg")))
+      (Name "input")))
+
+(define e-pipe-rule (cog-execute! pipe-rule))
+(test-assert "filter pipe rule"
+   (equal? e-pipe-rule (LinkValue
+      (LinkValue
+         (Item "PRIVMSG")
+         (Item "a")
+         (Item "you said: ")
+         (Item "c")))))
+
+; -----------
+; Test: DefinedSchema as Rule implicand
+(Define
+   (DefinedSchema "reply-template")
+   (LinkSignature (Type 'LinkValue)
+      (Item "PRIVMSG")
+      (Variable "$from")
+      (Item "you said: ")
+      (Variable "$msg")))
+
+(define def-rule
+   (Filter
+      (Rule
+         (VariableList
+            (Variable "$from") (Variable "$to") (Variable "$msg"))
+         (LinkSignature (Type 'LinkValue)
+            (Variable "$from") (Variable "$to") (Variable "$msg"))
+         (DefinedSchema "reply-template"))
+      (Name "input")))
+
+(define e-def-rule (cog-execute! def-rule))
+(test-assert "filter defined-schema rule"
+   (equal? e-def-rule (LinkValue
+      (LinkValue
+         (Item "PRIVMSG")
+         (Item "a")
+         (Item "you said: ")
+         (Item "c")))))
+
+; -----------
+; Test: DefinedSchema nested inside Rule implicand.
+; The nested DefinedSchema should be found and expanded, before the
+; substitution of the Rul variables.
+(define nested-def-rule
+   (Filter
+      (Rule
+         (VariableList
+            (Variable "$from") (Variable "$to") (Variable "$msg"))
+         (LinkSignature (Type 'LinkValue)
+            (Variable "$from") (Variable "$to") (Variable "$msg"))
+         (LinkSignature (Type 'LinkValue)
+            (Item "wrapped")
+            (DefinedSchema "reply-template")))
+      (Name "input")))
+
+(define e-nested-def-rule (cog-execute! nested-def-rule))
+(test-assert "filter nested defined-schema rule"
+   (equal? e-nested-def-rule (LinkValue
+      (LinkValue
+         (Item "wrapped")
+         (LinkValue
+            (Item "PRIVMSG")
+            (Item "a")
+            (Item "you said: ")
+            (Item "c"))))))
+
+; -----------
+
+(test-end tname)
+
+(opencog-test-end)
