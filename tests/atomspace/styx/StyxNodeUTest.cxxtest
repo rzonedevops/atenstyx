@@ -1,0 +1,78 @@
+/*
+ * StyxNodeUTest.cxxtest
+ *
+ * Unit tests for StyxNode
+ * Part of the ATenStyx neuro-symbolic cognitive fabric
+ *
+ * Copyright (C) 2026 OpenCog Foundation
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+#include <opencog/atomspace/styx/StyxNode.h>
+#include <opencog/atoms/base/Atom.h>
+#include <opencog/atomspace/AtomSpace.h>
+#include <opencog/atoms/atom_types/atom_types.h>
+
+using namespace opencog;
+
+class StyxNodeUTest : public CxxTest::TestSuite
+{
+private:
+	AtomSpace* as;
+
+public:
+	StyxNodeUTest() {
+		logger().set_level(Logger::DEBUG);
+		logger().set_print_to_stdout_flag(true);
+	}
+
+	void setUp() {
+		as = new AtomSpace();
+	}
+
+	void tearDown() {
+		delete as;
+	}
+
+	void test_create_styx_node() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create a StyxNode
+		Handle h = as->add_node(STYX_NODE, "tcp://localhost:564");
+		
+		TS_ASSERT(h != nullptr);
+		TS_ASSERT(h->is_node());
+		TS_ASSERT_EQUALS(h->get_type(), STYX_NODE);
+		TS_ASSERT_EQUALS(h->get_name(), "tcp://localhost:564");
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+
+	void test_styx_node_uniqueness() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create two StyxNodes with the same endpoint
+		Handle h1 = as->add_node(STYX_NODE, "tcp://server:564");
+		Handle h2 = as->add_node(STYX_NODE, "tcp://server:564");
+		
+		// They should be the same atom (uniqueness constraint)
+		TS_ASSERT_EQUALS(h1, h2);
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+
+	void test_styx_node_different_endpoints() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create StyxNodes with different endpoints
+		Handle h1 = as->add_node(STYX_NODE, "tcp://server1:564");
+		Handle h2 = as->add_node(STYX_NODE, "tcp://server2:564");
+		
+		// They should be different atoms
+		TS_ASSERT_DIFFERS(h1, h2);
+		TS_ASSERT_EQUALS(h1->get_name(), "tcp://server1:564");
+		TS_ASSERT_EQUALS(h2->get_name(), "tcp://server2:564");
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+};
