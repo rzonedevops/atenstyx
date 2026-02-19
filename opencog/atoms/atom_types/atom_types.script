@@ -1460,6 +1460,36 @@ JSON_AST <- FOREIGN_AST
 PYTHON_AST <- FOREIGN_AST
 
 // ==============================================================
+// ATen Tensor Extensions
+// Neuro-symbolic integration: ATen (A Tensor Library) atoms for
+// representing and manipulating tensors within the AtomSpace.
+// See opencog/atoms/aten/README.md for details.
+
+// Node representing a named tensor or tensor operation
+ATEN_NODE <- NODE
+
+// Link representing a tensor computation graph
+ATEN_TENSOR_LINK <- ORDERED_LINK
+
+// Link representing specific tensor operations (add, mul, matmul, etc)
+ATEN_OP_LINK <- FUNCTION_LINK
+
+// ==============================================================
+// Styx Protocol Extensions
+// Distributed space integration: Plan 9 Styx/9P protocol for
+// network-transparent access to AtomSpaces.
+// See opencog/atomspace/styx/README.md for details.
+
+// Node representing a Styx protocol endpoint
+STYX_NODE <- NODE
+
+// Link representing distributed AtomSpace connection
+STYX_SPACE_LINK <- ORDERED_LINK
+
+// Link for remote atom access via Styx protocol (executable)
+STYX_REMOTE_LINK <- FUNCTION_LINK
+
+// ==============================================================
 // Assorted miscellaneous link types with an unclear future.
 // Some of these need to be moved to the URE.
 

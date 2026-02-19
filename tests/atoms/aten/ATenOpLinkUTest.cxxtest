@@ -1,0 +1,94 @@
+/*
+ * ATenOpLinkUTest.cxxtest
+ *
+ * Unit tests for ATenOpLink
+ * Part of the ATenStyx neuro-symbolic cognitive fabric
+ *
+ * Copyright (C) 2026 OpenCog Foundation
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+#include <opencog/atoms/aten/ATenNode.h>
+#include <opencog/atoms/aten/ATenOpLink.h>
+#include <opencog/atoms/base/Node.h>
+#include <opencog/atomspace/AtomSpace.h>
+#include <opencog/atoms/atom_types/atom_types.h>
+
+using namespace opencog;
+
+class ATenOpLinkUTest : public CxxTest::TestSuite
+{
+private:
+	AtomSpace* as;
+
+public:
+	ATenOpLinkUTest() {
+		logger().set_level(Logger::DEBUG);
+		logger().set_print_to_stdout_flag(true);
+	}
+
+	void setUp() {
+		as = new AtomSpace();
+	}
+
+	void tearDown() {
+		delete as;
+	}
+
+	void test_create_aten_op_link() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create tensor operation
+		Handle op = as->add_node(CONCEPT_NODE, "matmul");
+		Handle tensor1 = as->add_node(ATEN_NODE, "weights");
+		Handle tensor2 = as->add_node(ATEN_NODE, "input");
+		
+		Handle h = as->add_link(ATEN_OP_LINK, op, tensor1, tensor2);
+		
+		TS_ASSERT(h != nullptr);
+		TS_ASSERT(h->is_link());
+		TS_ASSERT_EQUALS(h->get_type(), ATEN_OP_LINK);
+		TS_ASSERT_EQUALS(h->get_arity(), 3);
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+
+	void test_aten_op_link_execute() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create tensor operation
+		Handle op = as->add_node(CONCEPT_NODE, "add");
+		Handle tensor1 = as->add_node(ATEN_NODE, "a");
+		Handle tensor2 = as->add_node(ATEN_NODE, "b");
+		
+		Handle h = as->add_link(ATEN_OP_LINK, op, tensor1, tensor2);
+		ATenOpLinkPtr link = ATenOpLinkCast(h);
+		
+		TS_ASSERT(link != nullptr);
+		
+		// Execute should return a value (currently returns LinkValue)
+		ValuePtr result = link->execute(as);
+		TS_ASSERT(result != nullptr);
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+
+	void test_aten_op_link_incoming() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create tensor nodes
+		Handle tensor1 = as->add_node(ATEN_NODE, "weights");
+		Handle tensor2 = as->add_node(ATEN_NODE, "input");
+		
+		// Create operation using them
+		Handle op = as->add_node(CONCEPT_NODE, "matmul");
+		Handle h = as->add_link(ATEN_OP_LINK, op, tensor1, tensor2);
+		
+		// Check incoming sets
+		IncomingSet inc1 = tensor1->getIncomingSet();
+		TS_ASSERT_EQUALS(inc1.size(), 1);
+		TS_ASSERT_EQUALS(*inc1.begin(), h);
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+};

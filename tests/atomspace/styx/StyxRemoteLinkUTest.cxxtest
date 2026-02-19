@@ -1,0 +1,91 @@
+/*
+ * StyxRemoteLinkUTest.cxxtest
+ *
+ * Unit tests for StyxRemoteLink
+ * Part of the ATenStyx neuro-symbolic cognitive fabric
+ *
+ * Copyright (C) 2026 OpenCog Foundation
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+#include <opencog/atomspace/styx/StyxNode.h>
+#include <opencog/atomspace/styx/StyxRemoteLink.h>
+#include <opencog/atoms/base/Node.h>
+#include <opencog/atomspace/AtomSpace.h>
+#include <opencog/atoms/atom_types/atom_types.h>
+
+using namespace opencog;
+
+class StyxRemoteLinkUTest : public CxxTest::TestSuite
+{
+private:
+	AtomSpace* as;
+
+public:
+	StyxRemoteLinkUTest() {
+		logger().set_level(Logger::DEBUG);
+		logger().set_print_to_stdout_flag(true);
+	}
+
+	void setUp() {
+		as = new AtomSpace();
+	}
+
+	void tearDown() {
+		delete as;
+	}
+
+	void test_create_styx_remote_link() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create remote execution link
+		Handle endpoint = as->add_node(STYX_NODE, "tcp://remote:564");
+		Handle query = as->add_node(CONCEPT_NODE, "query");
+		
+		Handle h = as->add_link(STYX_REMOTE_LINK, endpoint, query);
+		
+		TS_ASSERT(h != nullptr);
+		TS_ASSERT(h->is_link());
+		TS_ASSERT_EQUALS(h->get_type(), STYX_REMOTE_LINK);
+		TS_ASSERT_EQUALS(h->get_arity(), 2);
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+
+	void test_styx_remote_link_execute() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create remote execution link
+		Handle endpoint = as->add_node(STYX_NODE, "tcp://cluster:564");
+		Handle query = as->add_node(CONCEPT_NODE, "search");
+		
+		Handle h = as->add_link(STYX_REMOTE_LINK, endpoint, query);
+		StyxRemoteLinkPtr link = StyxRemoteLinkCast(h);
+		
+		TS_ASSERT(link != nullptr);
+		
+		// Execute should return a value (currently returns LinkValue)
+		ValuePtr result = link->execute(as);
+		TS_ASSERT(result != nullptr);
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+
+	void test_styx_remote_link_incoming() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create endpoint and query
+		Handle endpoint = as->add_node(STYX_NODE, "tcp://remote:564");
+		Handle query = as->add_node(CONCEPT_NODE, "pattern");
+		
+		// Create remote link
+		Handle h = as->add_link(STYX_REMOTE_LINK, endpoint, query);
+		
+		// Check incoming sets
+		IncomingSet inc1 = endpoint->getIncomingSet();
+		TS_ASSERT_EQUALS(inc1.size(), 1);
+		TS_ASSERT_EQUALS(*inc1.begin(), h);
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+};

@@ -1,0 +1,78 @@
+/*
+ * ATenNodeUTest.cxxtest
+ *
+ * Unit tests for ATenNode
+ * Part of the ATenStyx neuro-symbolic cognitive fabric
+ *
+ * Copyright (C) 2026 OpenCog Foundation
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+#include <opencog/atoms/aten/ATenNode.h>
+#include <opencog/atoms/base/Atom.h>
+#include <opencog/atomspace/AtomSpace.h>
+#include <opencog/atoms/atom_types/atom_types.h>
+
+using namespace opencog;
+
+class ATenNodeUTest : public CxxTest::TestSuite
+{
+private:
+	AtomSpace* as;
+
+public:
+	ATenNodeUTest() {
+		logger().set_level(Logger::DEBUG);
+		logger().set_print_to_stdout_flag(true);
+	}
+
+	void setUp() {
+		as = new AtomSpace();
+	}
+
+	void tearDown() {
+		delete as;
+	}
+
+	void test_create_aten_node() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create an ATenNode
+		Handle h = as->add_node(ATEN_NODE, "test_tensor");
+		
+		TS_ASSERT(h != nullptr);
+		TS_ASSERT(h->is_node());
+		TS_ASSERT_EQUALS(h->get_type(), ATEN_NODE);
+		TS_ASSERT_EQUALS(h->get_name(), "test_tensor");
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+
+	void test_aten_node_uniqueness() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create two ATenNodes with the same name
+		Handle h1 = as->add_node(ATEN_NODE, "weights");
+		Handle h2 = as->add_node(ATEN_NODE, "weights");
+		
+		// They should be the same atom (uniqueness constraint)
+		TS_ASSERT_EQUALS(h1, h2);
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+
+	void test_aten_node_different_names() {
+		logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+		// Create ATenNodes with different names
+		Handle h1 = as->add_node(ATEN_NODE, "weights");
+		Handle h2 = as->add_node(ATEN_NODE, "biases");
+		
+		// They should be different atoms
+		TS_ASSERT_DIFFERS(h1, h2);
+		TS_ASSERT_EQUALS(h1->get_name(), "weights");
+		TS_ASSERT_EQUALS(h2->get_name(), "biases");
+
+		logger().info("END TEST: %s", __FUNCTION__);
+	}
+};
